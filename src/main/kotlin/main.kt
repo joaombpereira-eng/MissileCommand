@@ -1,30 +1,26 @@
 import pt.isel.canvas.*
 
+const val MARGIN = 50
+
 fun main() {
 
     onStart {
-        val canvas = Canvas(800,600, BLACK)
+        val canvas = Canvas(WORLD_WIDTH, WORLD_HEIGHT, BLACK)
 
-        var world = World(
-                Missile(
-                        Location(100.0, 0.0),
-                        Location(200.0, 200.0),
-                        Velocity(0.0,0.0),
-                        RED),
-                Explosion(
-                        Location(150.0, 150.0),
-                        5.0,
-                        1.03,
-                        RED)
-        )
+        val entry = Location((MARGIN..WORLD_WIDTH - MARGIN).random().toDouble(),0.0)
+        val target = Location((MARGIN..WORLD_WIDTH - MARGIN).random().toDouble(), WORLD_HEIGHT.toDouble())
+
+        var world = World(Missile(entry, entry, computeVelocity(entry, target)))
 
         canvas.onMouseDown {
-            // Always the mouse is pressed
-            world = TODO()
+            world = World(
+                    world.missile,
+                    Explosion(
+                            Location(it.x.toDouble(), it.y.toDouble()))
+            )
         }
 
         canvas.onTimeProgress(25) {
-            // Apply time passing to the world
             world = doStep(world)
             drawWorld(canvas, world)
         }

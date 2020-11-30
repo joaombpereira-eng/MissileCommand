@@ -7,10 +7,7 @@ fun main() {
     onStart {
         val canvas = Canvas(WORLD_WIDTH, WORLD_HEIGHT, BLACK)
 
-        val entry = Location((MARGIN..WORLD_WIDTH - MARGIN).random().toDouble(),0.0)
-        val target = Location((MARGIN..WORLD_WIDTH - MARGIN).random().toDouble(), WORLD_HEIGHT.toDouble())
-
-        var world = World(Missile(entry, entry, computeVelocity(entry, target)))
+        var world = World(createMissile(WORLD_WIDTH, WORLD_HEIGHT, MARGIN))
 
         canvas.onMouseDown {
             world = World(
@@ -21,7 +18,7 @@ fun main() {
         }
 
         canvas.onTimeProgress(25) {
-            world = doStep(world)
+            world = computeNextWorld(world)
             drawWorld(canvas, world)
         }
     }

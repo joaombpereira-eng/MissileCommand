@@ -1,4 +1,4 @@
-import pt.isel.canvas.RED
+import pt.isel.canvas.WHITE
 
 const val MIN_RADIUS = 5.0
 const val MAX_RADIUS = 50.0
@@ -19,7 +19,7 @@ data class Explosion(
         val center: Location,
         val radius: Double = MIN_RADIUS,
         val rate: Double = GROWTH_RATE,
-        val color: Int = RED)
+        val color: Int = WHITE)
 
 /**
  * Creates a new explosion from the given one but with a new radius.
@@ -29,12 +29,15 @@ data class Explosion(
  * @return the new explosion
  */
 fun fromExplosionWithNewRadius(explosion: Explosion, newRadius: Double) =
-    Explosion(explosion.center, newRadius, explosion.rate, explosion.color)
+        Explosion(explosion.center, newRadius, explosion.rate, explosion.color)
 
-fun expandUntil(explosion: Explosion, maxRadius: Double): Explosion =
-    if (explosion.radius >= maxRadius) explosion
-    else fromExplosionWithNewRadius(explosion,explosion.radius * explosion.rate)
+private fun applyExplosionRate(explosion: Explosion, predicate: (Explosion) -> Boolean): Explosion {
+    return if (predicate(explosion)) explosion
+    else fromExplosionWithNewRadius(explosion, explosion.radius * explosion.rate)
+}
+
+fun expandUntil(explosion: Explosion, maxRadius: Double) =
+        applyExplosionRate(explosion) { it.radius >= maxRadius }
 
 fun contractUntilZero(explosion: Explosion) =
-    if (explosion.radius <= 0) explosion
-    else fromExplosionWithNewRadius(explosion,explosion.radius * explosion.rate)
+        applyExplosionRate(explosion) { it.radius < 0 }

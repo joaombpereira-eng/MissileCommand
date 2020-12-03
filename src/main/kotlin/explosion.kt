@@ -1,9 +1,9 @@
 import pt.isel.canvas.WHITE
 
 const val MIN_RADIUS = 5.0
-const val MAX_RADIUS = 50.0
+const val MAX_RADIUS = 40.0
 
-const val GROWTH_RATE = 1.03
+const val GROWTH_RATE = 1.05
 const val SHRINK_RATE = 0.97
 
 /**
@@ -59,7 +59,7 @@ private fun maybeApplyExplosionRate(explosion: Explosion, predicate: Predicate) 
  * @return the new explosion if the maximum radius hasn't yet been reached.
  */
 private fun expandUntil(explosion: Explosion, maxRadius: Double): Explosion {
-    val condition: Predicate = { explosion: Explosion -> explosion.radius < maxRadius }
+    val condition: Predicate = { thExplosion: Explosion -> thExplosion.radius < maxRadius }
     return maybeApplyExplosionRate(explosion, condition)
 }
 
@@ -69,23 +69,28 @@ private fun expandUntil(explosion: Explosion, maxRadius: Double): Explosion {
  * @param explosion the explosion to be tentatively contracts
  * @return the new explosion if the minimum radius hasn't yet been reached.
  */
-private fun contractUntilZero(explosion: Explosion) = maybeApplyExplosionRate(explosion) { it.radius > 0 }
+private fun contractUntil(explosion: Explosion, minRadius: Double) =
+    maybeApplyExplosionRate(explosion) { it.radius > minRadius }
 
 /**
- * Makes the explosion evolve
+ * Makes the explosion evolve, if it exists. Explosions evolve by expanding until they reach the maximum radius. Once
+ * that radius is reached, they start to contract until they reach their minimum radius. After that, they disappear.
  *
  * @param explosion the explosion, is it exists
- * @return the new evolved explosion or null.
+ * @return the new evolved explosion, or null if it disappeared.
  */
 fun evolveExplosion(explosion: Explosion?): Explosion? {
     val newExplosion = when {
         explosion == null -> null
         explosion.rate == GROWTH_RATE -> expandUntil(explosion, MAX_RADIUS)
-        else -> contractUntilZero(explosion)
+        else -> contractUntil(explosion, MIN_RADIUS)
     }
 
-    return if (newExplosion != explosion || newExplosion == null) newExplosion
-    else revertExplosionRate(newExplosion)
+    return when {
+        newExplosion == null || newExplosion.radius <= MIN_RADIUS -> null
+        newExplosion != explosion -> newExplosion
+        else -> revertExplosionRate(newExplosion)
+    }
 }
 
 /**

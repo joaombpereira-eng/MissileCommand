@@ -1,6 +1,7 @@
 private const val WORLD_WIDTH = 800
 private const val WORLD_HEIGHT = 600
 private const val MARGIN = 50
+private const val GROUND_HEIGHT = 50
 
 /**
  * Representation of the game world.
@@ -8,11 +9,17 @@ private const val MARGIN = 50
 data class World(
     val width: Int = WORLD_WIDTH,
     val height: Int = WORLD_HEIGHT,
+    val groundHeight: Int = GROUND_HEIGHT,
     val missiles: List<Missile> = listOf(),
     val explosions: List<Explosion> = listOf()
 )
 
-fun initializedWorld(): World {
+/**
+ * Creates a new [World] instance.
+ *
+ * @return the new instance
+ */
+fun createWorld(): World {
     val missilesList: List<Missile> = listOf(
         createMissile(WORLD_WIDTH, WORLD_HEIGHT, MARGIN, FOE_MISSILE_VELOCITY_MAGNITUDE),
         createMissile(WORLD_WIDTH, WORLD_HEIGHT, MARGIN, FOE_MISSILE_VELOCITY_MAGNITUDE),
@@ -22,23 +29,44 @@ fun initializedWorld(): World {
 }
 
 /**
+ * Builds a new world instance from the given one.
+ *
+ * @param world
+ * @param width
+ * @param height
+ * @param groundHeight
+ * @param missiles
+ * @param explosions
+ *
+ * @return the new world instance
+ */
+fun buildWorld(
+    world: World,
+    width: Int = world.width,
+    height: Int = world.height,
+    groundHeight: Int = world.groundHeight,
+    missiles: List<Missile> = world.missiles,
+    explosions: List<Explosion> = world.explosions
+) = World(width, height, groundHeight, missiles, explosions)
+
+/**
  * Adds the explosion to the world.
  *
  * @param world     the world instance
  * @param location  the location of the new explosion
- * @return the new world instance.
+ * @return the new world instance
  */
 fun addExplosionToWorld(world: World, location: Location) =
-    World(missiles = world.missiles, explosions = world.explosions + Explosion(location))
+    buildWorld(world, explosions = world.explosions + Explosion(location))
 
 /**
- * Computes the set of missiles that were destroyed by any of the explosions.
+ * Computes the list of missiles that were destroyed by any of the explosions.
  *
- * @param missiles      the current list of missiles
+ * @param missiles      the current list of attacking missiles
  * @param explosions    the explosions to consider
  * @return the surviving missiles.
  */
-fun computeNextMissiles(missiles: List<Missile>, explosions: List<Explosion>): List<Missile> {
+fun removeExplodedMissiles(missiles: List<Missile>, explosions: List<Explosion>): List<Missile> {
     return missiles.filter { !detectCollision(explosions, it) }.map { moveMissile(it) }
 }
 
@@ -47,20 +75,21 @@ fun computeNextMissiles(missiles: List<Missile>, explosions: List<Explosion>): L
  *
  * @param explosions    the explosions to consider
  * @param missile       the missile
- * @return a boolean value to indicate if the [missile] was destroyed or not by any of the explosions in [explosions].
+ * @return a boolean value to indicate if the [missile] was destroyed or not by any of the explosions in [explosions]
  */
-fun detectCollision(explosions: List<Explosion>, missile: Missile) =
-    explosions.any { detectCollision(it, missile) }
+fun detectCollision(explosions: List<Explosion>, missile: Missile): Boolean {
+    return explosions.any { detectCollision(it, missile) }
+}
 
 /**
- * Verifies if the given explosions destroys the missile.
+ * Verifies if the given explosion destroys the given missile.
  *
- * @param explosion    the explosion to consider
- * @param missile      the missile
- * @return a boolean value to indicate if the [missile] was destroyed or not by [explosion].
+ * @param explosion the explosion to consider
+ * @param missile   the missile
+ * @return a boolean value to indicate if the [missile] was destroyed or not by [explosion]
  */
 fun detectCollision(explosion: Explosion, missile: Missile) =
-    distance(explosion.center, missile.current) < explosion.radius
+    isExpanding(explosion) && distance(explosion.center, missile.current) < explosion.radius
 
 /**
  * Computes the new world based on the given one.
@@ -69,7 +98,15 @@ fun detectCollision(explosion: Explosion, missile: Missile) =
  * @return The new [World] instance
  */
 fun computeNextWorld(world: World): World {
-    val newExplosions: List<Explosion> = world.explosions.mapNotNull { evolveExplosion(it) }
-    val newMissiles: List<Missile> = computeNextMissiles(world.missiles, world.explosions)
-    return World(missiles = newMissiles, explosions = newExplosions)
+    val evolvedExplosions: List<Explosion> = world.explosions.mapNotNull { evolveExplosion(it) }
+    val nonExplodedMissiles = removeExplodedMissiles(world.missiles, world.explosions)
+
+    val groundHitMissiles = nonExplodedMissiles.filter { it.current.y >= world.height - world.groundHeight }
+    val groundExplosions = groundHitMissiles.map { Explosion(center = it.current) }
+
+    return buildWorld(
+        world,
+        missiles = nonExplodedMissiles - groundHitMissiles,
+        explosions = evolvedExplosions + groundExplosions
+    )
 }

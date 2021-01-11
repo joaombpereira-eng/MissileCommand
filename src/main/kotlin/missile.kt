@@ -2,7 +2,7 @@ import pt.isel.canvas.RED
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-const val FOE_MISSILE_VELOCITY_MAGNITUDE = 1.5
+const val FOE_MISSILE_VELOCITY_MAGNITUDE = 2.0
 
 /**
  * Represents enemy missiles.
@@ -13,10 +13,10 @@ const val FOE_MISSILE_VELOCITY_MAGNITUDE = 1.5
  * @property color      The missile's color
  */
 data class Missile(
-    val start: Location,
-    val current: Location,
-    val velocity: Velocity = Velocity(0.0, 0.0),
-    val color: Int = RED
+        val start: Location,
+        val current: Location,
+        val velocity: Velocity = Velocity(0.0, 0.0),
+        val color: Int = RED
 )
 
 /**
@@ -35,15 +35,15 @@ private fun computeNormalizedVelocity(start: Location, end: Location): Velocity 
 /**
  * Creates a new missile with the specified constraints
  *
- * @param worldWidth    The width of the world
+ * @param worldHeight   The width of the world
  * @param worldHeight   The height of the world
  * @param dmzMargin     The width of the demilitarized zone (where no missiles will fall)
  * @param magnitude     The magnitude of the missile's velocity vector
  * @return the newly created missile
  */
 fun createMissile(worldWidth: Int, worldHeight: Int, dmzMargin: Int, magnitude: Double): Missile {
-    val entry = Location((dmzMargin..worldWidth - dmzMargin).random().toDouble(), 0.0)
-    val target = Location((dmzMargin..worldWidth - dmzMargin).random().toDouble(), worldHeight.toDouble())
+    val entry = Location((dmzMargin .. worldWidth - dmzMargin).random().toDouble(), 0.0)
+    val target = Location((dmzMargin .. worldWidth - dmzMargin).random().toDouble(), worldHeight.toDouble())
     val normalized = computeNormalizedVelocity(entry, target)
     return Missile(entry, entry, Velocity(normalized.dx * magnitude, normalized.dy * magnitude))
 }
@@ -51,11 +51,11 @@ fun createMissile(worldWidth: Int, worldHeight: Int, dmzMargin: Int, magnitude: 
 /**
  * Moves the given missile.
  *
- * @param missile   the missile to be moved
- * @return the new missile instance
+ * @param missile the missile to be moved.
+ * @return the new missile instance.
  */
 fun moveMissile(missile: Missile) = Missile(
-    missile.start,
-    add(missile.current, missile.velocity),
-    missile.velocity,
+        missile.start,
+        add(missile.current, missile.velocity),
+        missile.velocity
 )

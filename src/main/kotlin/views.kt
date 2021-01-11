@@ -1,4 +1,9 @@
 import pt.isel.canvas.Canvas
+import pt.isel.canvas.GREEN
+import pt.isel.canvas.WHITE
+import kotlin.math.pow
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 /**
  * Draws the world.
@@ -7,8 +12,10 @@ import pt.isel.canvas.Canvas
  */
 fun drawWorld(canvas: Canvas, world: World) {
     canvas.erase()
+
     world.explosions.forEach { drawExplosion(canvas, it) }
     world.missiles.forEach { drawMissile(canvas, it) }
+    drawGround(canvas, world)
 }
 
 /**
@@ -31,12 +38,36 @@ private fun drawExplosion(canvas: Canvas, explosion: Explosion) {
  * @param missile   the explosion
  */
 private fun drawMissile(canvas: Canvas, missile: Missile) {
+
+    val magnitude = sqrt(missile.velocity.dx.pow(2) + missile.velocity.dy.pow(2))
+    val missileSize = 12
     canvas.drawLine(
-        missile.start.x.toInt(),
-        missile.start.y.toInt(),
-        missile.current.x.toInt(),
-        missile.current.y.toInt(),
-        missile.color,
+        (missile.current.x - missileSize * (missile.velocity.dx / magnitude)).roundToInt(),
+        (missile.current.y - missileSize * (missile.velocity.dy / magnitude)).roundToInt(),
+        missile.current.x.roundToInt(),
+        missile.current.y.roundToInt(),
+        WHITE,
         3
+    )
+
+    val trailSize = 120
+    canvas.drawLine(
+        (missile.current.x - trailSize * (missile.velocity.dx / magnitude)).roundToInt(),
+        (missile.current.y - trailSize * (missile.velocity.dy / magnitude)).roundToInt(),
+        (missile.current.x - missileSize * (missile.velocity.dx / magnitude)).roundToInt(),
+        (missile.current.y - missileSize * (missile.velocity.dy / magnitude)).roundToInt(),
+        missile.color,
+        1
+    )
+}
+
+fun drawGround(canvas: Canvas, world: World) {
+    canvas.drawLine(
+        xFrom = 0,
+        yFrom = world.height - world.groundHeight,
+        xTo = world.width,
+        yTo = world.height - world.groundHeight,
+        color = GREEN,
+        thickness = 4
     )
 }

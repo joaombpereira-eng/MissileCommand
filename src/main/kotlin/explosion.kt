@@ -7,7 +7,7 @@ const val GROWTH_RATE = 1.06
 const val SHRINK_RATE = 0.94
 
 
-// TODO: (4) Explosion color sequence should be branco, amarelo, magenta, vermelho, cyan, verde, azul escuro, preto
+// TODO: (2) Explosion color sequence should be branco, amarelo, magenta, vermelho, cyan, verde, azul escuro, preto
 
 /**
  * Represents explosions at a given time instant.

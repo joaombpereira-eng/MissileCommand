@@ -1,3 +1,4 @@
+
 private const val WORLD_WIDTH = 800
 private const val WORLD_HEIGHT = 600
 private const val MARGIN = 50
@@ -7,57 +8,38 @@ private const val GROUND_HEIGHT = 50
  * Representation of the game world.
  */
 data class World(
-    val width: Int = WORLD_WIDTH,
-    val height: Int = WORLD_HEIGHT,
-    val groundHeight: Int = GROUND_HEIGHT,
-    val missiles: List<Missile> = listOf(),
-    val explosions: List<Explosion> = listOf()
+        val width: Int = WORLD_WIDTH,
+        val height: Int = WORLD_HEIGHT,
+        val groundHeight: Int = GROUND_HEIGHT,
+        val missiles: List<Missile> = listOf(),
+        val defenderMissiles: List<Missile> = listOf(),
+        val explosions: List<Explosion> = listOf(),
 )
 
 /**
- * Creates a new [World] instance.
+ * Adds an attacker missile to the given world.
  *
- * @return the new instance
+ * @param world The world instance
+ * @return the new world instance
  */
-fun createWorld(): World {
-    val missilesList: List<Missile> = listOf(
-        createMissile(WORLD_WIDTH, WORLD_HEIGHT, MARGIN, FOE_MISSILE_VELOCITY_MAGNITUDE),
-        createMissile(WORLD_WIDTH, WORLD_HEIGHT, MARGIN, FOE_MISSILE_VELOCITY_MAGNITUDE),
-        createMissile(WORLD_WIDTH, WORLD_HEIGHT, MARGIN, FOE_MISSILE_VELOCITY_MAGNITUDE)
+fun addMissileToWorld(world: World) = world.build(
+        missiles = world.missiles + createMissile(world.width, world.height, MARGIN, FOE_MISSILE_VELOCITY_MAGNITUDE)
     )
-    return World(missiles = missilesList)
-}
 
 /**
  * Builds a new world instance from the given one.
  *
- * @param world
- * @param width
- * @param height
- * @param groundHeight
- * @param missiles
- * @param explosions
- *
+ * @param world the world instance
  * @return the new world instance
  */
-fun buildWorld(
-    world: World,
-    width: Int = world.width,
-    height: Int = world.height,
-    groundHeight: Int = world.groundHeight,
-    missiles: List<Missile> = world.missiles,
-    explosions: List<Explosion> = world.explosions
-) = World(width, height, groundHeight, missiles, explosions)
-
-/**
- * Adds the explosion to the world.
- *
- * @param world     the world instance
- * @param location  the location of the new explosion
- * @return the new world instance
- */
-fun addExplosionToWorld(world: World, location: Location) =
-    buildWorld(world, explosions = world.explosions + Explosion(location))
+fun World.build(
+    width: Int = this.width,
+    height: Int = this.height,
+    groundHeight: Int = this.groundHeight,
+    missiles: List<Missile> = this.missiles,
+    defenderMissiles: List<Missile> = this.defenderMissiles,
+    explosions: List<Explosion> = this.explosions
+) = World(width, height, groundHeight, missiles, defenderMissiles, explosions)
 
 /**
  * Computes the list of missiles that were destroyed by any of the explosions.
@@ -98,15 +80,22 @@ fun detectCollision(explosion: Explosion, missile: Missile) =
  * @return The new [World] instance
  */
 fun computeNextWorld(world: World): World {
-    val evolvedExplosions: List<Explosion> = world.explosions.mapNotNull { evolveExplosion(it) }
+
+    val evolvedExplosions = world.explosions.mapNotNull { evolveExplosion(it) }
     val nonExplodedMissiles = removeExplodedMissiles(world.missiles, world.explosions)
+
+    val movedDefenderMissiles = world.defenderMissiles.map { moveMissile(it) }
+    val defenderMissilesToExplode = movedDefenderMissiles.filter { hasReachedTarget(it) }
+
+    val evolvedDefenderMissiles = movedDefenderMissiles - defenderMissilesToExplode
+    val explodedDefenderMissiles = defenderMissilesToExplode.map { Explosion(center = it.current) }
 
     val groundHitMissiles = nonExplodedMissiles.filter { it.current.y >= world.height - world.groundHeight }
     val groundExplosions = groundHitMissiles.map { Explosion(center = it.current) }
 
-    return buildWorld(
-        world,
+    return world.build(
         missiles = nonExplodedMissiles - groundHitMissiles,
-        explosions = evolvedExplosions + groundExplosions
+        defenderMissiles = evolvedDefenderMissiles,
+        explosions = evolvedExplosions + groundExplosions + explodedDefenderMissiles
     )
 }

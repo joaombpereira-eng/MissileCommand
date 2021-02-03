@@ -1,26 +1,3 @@
-import kotlin.math.pow
-import kotlin.math.sqrt
-
-/**
- * Represents vectors in a plane (2D space).
- *
- * @property x  the horizontal coordinate
- * @property y  the vertical coordinate
- */
-data class Vector2D(val x: Double, val y: Double)
-
-operator fun Vector2D.plus(other: Vector2D) = Vector2D(this.x + other.x, this.y + other.y)
-
-operator fun Vector2D.minus(other: Vector2D) = Vector2D(this.x - other.x, this.y - other.y)
-
-operator fun Vector2D.times(amplitude: Double) = Vector2D(x * amplitude, y * amplitude)
-
-operator fun Vector2D.div(amplitude: Double) = Vector2D(x / amplitude, y / amplitude)
-
-fun Vector2D.magnitude() = sqrt(x.pow(2) + y.pow(2))
-
-fun Vector2D.norm() = this / magnitude()
-
 /**
  * Represents coordinates on the game arena.
  *
@@ -29,9 +6,15 @@ fun Vector2D.norm() = this / magnitude()
  */
 data class Location(val x: Double, val y: Double)
 
-fun Location.toVector() = Vector2D(x, y)
+/**
+ * Extension function that converts a [Location] to a [Vector2D]
+ */
+fun Location.toVector() = Vector2D(this.x, this.y)
 
-fun Vector2D.toLocation() = Location(x, y)
+/**
+ * Extension function that converts a [Vector2D] to a [Location]
+ */
+fun Vector2D.toLocation() = Location(this.x, this.y)
 
 /**
  * Represents coordinates variations in the arena.
@@ -41,8 +24,14 @@ fun Vector2D.toLocation() = Location(x, y)
  */
 data class Velocity(val dx: Double, val dy: Double)
 
+/**
+ * Extension function that converts a [Velocity] to a [Vector2D]
+ */
 fun Velocity.toVector() = Vector2D(dx, dy)
 
+/**
+ * Extension function that converts a [Vector2D] to a [Velocity]
+ */
 fun Vector2D.toVelocity() = Velocity(x, y)
 
 /**
@@ -53,7 +42,7 @@ fun Vector2D.toVelocity() = Velocity(x, y)
  * @return the distance (a Double) between the two locations
  */
 fun distance(l1: Location, l2: Location) =
-    (l1.toVector() - l2.toVector()).magnitude()
+        (l1.toVector() - l2.toVector()).magnitude()
 
 /**
  * Adds to [start] the displacement expressed by [velocity].
@@ -63,4 +52,4 @@ fun distance(l1: Location, l2: Location) =
  * @return the new location
  */
 fun add(start: Location, velocity: Velocity) =
-    (start.toVector() + velocity.toVector()).toLocation()
+        (start.toVector() + velocity.toVector()).toLocation()

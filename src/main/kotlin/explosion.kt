@@ -6,8 +6,7 @@ const val MAX_RADIUS = 36.0
 const val GROWTH_RATE = 1.06
 const val SHRINK_RATE = 0.94
 
-
-// TODO: (2) Explosion color sequence should be branco, amarelo, magenta, vermelho, cyan, verde, azul escuro, preto
+// TODO: Explosion color sequence should be branco, amarelo, magenta, vermelho, cyan, verde, azul escuro, preto
 
 /**
  * Represents explosions at a given time instant.
@@ -99,14 +98,16 @@ fun isExpanding(explosion: Explosion) = explosion.rate == GROWTH_RATE
  */
 fun evolveExplosion(explosion: Explosion?): Explosion? {
 
-    val newExplosion = when {
-        explosion == null -> null
-        isExpanding(explosion) -> expandUntil(explosion, MAX_RADIUS)
-        else -> contractUntil(explosion, MIN_RADIUS)
-    }
+    // Using imperative style flow control for demo purposes
+    if (explosion == null)
+        return null
+
+    val newExplosion =
+        if (isExpanding(explosion)) expandUntil(explosion, MAX_RADIUS)
+        else contractUntil(explosion, MIN_RADIUS)
 
     return when {
-        newExplosion == null || newExplosion.radius <= MIN_RADIUS -> null
+        newExplosion.radius <= MIN_RADIUS -> null
         newExplosion != explosion -> newExplosion
         else -> revertExplosionRate(newExplosion)
     }
